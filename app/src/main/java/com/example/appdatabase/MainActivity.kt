@@ -1,6 +1,7 @@
 package com.example.appdatabase
 
 import android.content.ContentValues
+import android.content.ContentValues.TAG
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -13,7 +14,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -36,7 +38,11 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             AppdatabaseTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                // A surface container using the 'background' color from the theme
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
                     App(db)
                 }
             }
@@ -123,18 +129,65 @@ fun App(db: FirebaseFirestore){
             Arrangement.Center
         ){
             Button(onClick = {
-                val city = hashMapOf(
+                val pessoas = hashMapOf(
                     "nome" to nome,
                     "telefone" to telefone
                 )
 
-                db.collection("clientes").document("primeiroCliente")
-                    .set(city)
-                    .addOnSuccessListener { Log.d(ContentValues.TAG, "DocumentSnapshot successfully written!") }
-                    .addOnFailureListener { e -> Log.w(ContentValues.TAG, "Error writing document", e)}
+                db.collection("clientes").add(pessoas)
+                    .addOnSuccessListener { documentReference ->
+                        Log.d(TAG, "DocumentSnapshot written with ID: ${documentReference.id}") }
+                    .addOnFailureListener { e ->
+                        Log.w(TAG, "Error adding document", e)}
+
             }) {
                 Text(text = "Cadastrar")
             }
         }
+
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .padding(20.dp)
+        ) {
+        }
+
+        Row(
+            Modifier
+                .fillMaxWidth()
+        ) {
+            Column (
+                Modifier
+                    .fillMaxWidth(0.3f)
+            ){
+                Text(text = "Nome: ")
+            }
+        }
+
+        Row(
+            Modifier
+                .fillMaxWidth()
+        ) {
+            Column(
+
+            ) {
+                db.collection("clientes")
+                    .get()
+                    .addOnSuccessListener { documents ->
+                        for (document in documents) {
+                            val lista = hashMapOf(
+                                "nome" to "${document.data.get("nome")}",
+                                "telefone" to "${document.data.get("telefone")}"
+                            )
+                            Log.d(TAG, "${document.id} => ${document.data}")
+                        }
+                    }
+                    .addOnFailureListener { excepetion ->
+                        Log.w(TAG, "Error getting document: ", excepetion)
+                    }
+
+            }
+        }
+
     }
 }
